@@ -3,6 +3,14 @@ Forked from the [Cloudflare Stream Wordpress plugin](https://wordpress.org/plugi
 Development
 ---------------
 
+Install:
+
+Clone this repo, cd into the directory and run
+
+```bash
+$ npm install
+```
+
 Build for development:
 
 ```bash
