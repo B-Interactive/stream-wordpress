@@ -66,37 +66,22 @@ registerBlockType( 'cloudflare-stream/block-video', {
 		},
 		autoplay: {
 			type: 'boolean',
-			source: 'attribute',
-			selector: 'stream',
-			attribute: 'autoplay',
 			default: false,
 		},
 		loop: {
 			type: 'boolean',
-			source: 'attribute',
-			selector: 'stream',
-			attribute: 'loop',
 			default: false,
 		},
 		muted: {
 			type: 'boolean',
-			source: 'attribute',
-			selector: 'stream',
-			attribute: 'muted',
 			default: false,
 		},
 		controls: {
 			type: 'boolean',
-			source: 'attribute',
-			selector: 'stream',
-			attribute: 'controls',
 			default: true,
 		},
 		transform: {
 			type: 'boolean',
-			source: 'attribute',
-			selector: 'stream',
-			attribute: 'transform',
 			default: false,
 		},
 	},
@@ -126,9 +111,27 @@ registerBlockType( 'cloudflare-stream/block-video', {
 	 * @returns {object} A WordPress block.
 	 */
 	save: function( props ) {
-		const { uid, controls, autoplay, loop, muted, className } = props.attributes;
+		const { uid, thumbnail, controls, autoplay, loop, muted, className } = props.attributes;
 		if ( uid !== false ) {
-			// Create block UI using WordPress createElement
+			
+			// build a query string for Stream URL options
+			let queryElements = [];
+
+			// get any querystring params included in the UID (not clear why this sometimes happens)
+			if ( uid.split('?')[1] ) 				queryElements.push( uid.split('?')[1] );
+
+			// add the thumbnail if it exists
+			if ( thumbnail ) 						queryElements.push( 'poster=' + encodeURIComponent( thumbnail ) );
+			
+			// add other boolean parameters if they are set
+			const params = { controls, autoplay, loop, muted };
+			for ( const param in params ) {
+				if ( typeof params[param] != 'undefined' && params[param] ) queryElements.push( param + '=true' );
+			}
+
+			let queryString = '?' + queryElements.join('&');
+
+
 			return wp.element.createElement(
 				'figure',
 				{
@@ -137,29 +140,21 @@ registerBlockType( 'cloudflare-stream/block-video', {
 				},
 				[
 					wp.element.createElement(
-						'stream',
-						{
-							src: uid,
-							controls: controls,
-							autoplay: autoplay,
-							loop: loop,
-							muted: muted,
-						},
-					),
-					wp.element.createElement(
 						'div',
 						{
-							className: 'target',
-						}
-					),
-					wp.element.createElement(
-						'script',
-						{
-							'data-cfasync': false,
-							defer: true,
-							type: 'text/javascript',
-							src: 'https://embed.videodelivery.net/embed/r4xu.fla9.latest.js?video=' + uid,
+							className: 'player-wrapper'
 						},
+						[
+							wp.element.createElement(
+								'iframe',
+								{
+									className: 'player-frame',
+									src:'https://iframe.videodelivery.net/' + uid + queryString,
+									allow: "accelerometer; gyroscope; autoplay; encrypted-media; picture-in-picture;",
+									allowfullscreen: "true"
+								}
+							)
+						]
 					),
 				]
 			);
